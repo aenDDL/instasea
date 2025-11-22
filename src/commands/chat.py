@@ -6,12 +6,13 @@ import os
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from pydantic import ValidationError
 
 from src.main import instasea, config_dict
 from src.core.paths import mqtt_file
 from src.services.instagram import IgClient
-from src.services.validator import create_message_model, Message
 from src.services.tickets import TicketsManager
+from src.core.types import FastAPIMessage
 
 
 @dataclass
@@ -22,21 +23,25 @@ class QueueManager:
 
     async def process(self) -> None:
         while True:
-            thread_id: int = await self.q.get()
-            logging.info(f"Processing message from thread with ID: {thread_id}")
-            await asyncio.to_thread(self.tickets.create_ticket, thread_id)
-            self.q_cache.discard(thread_id)
-            logging.info(f"Operations in thread with ID: {thread_id} finished")
+            message: FastAPIMessage = await self.q.get()
+            logging.info(f"Processing message from {message.username}")
+            await asyncio.to_thread(self.tickets.create_ticket, message)
+            self.q_cache.discard(message.thread_id)
+            logging.info(f"Operations with user {message.username} finished")
             self.q.task_done()
 
     async def validate(self, raw_notification: dict) -> None:
-        message: Message | bool = create_message_model(raw_notification)
-        if message:
-            if message.thread_id not in self.q_cache:
-                self.q_cache.add(message.thread_id)
-                await self.q.put(message.thread_id)
-            else:
-                logging.info(f"Ignoring message from {message.username} as already in queue")
+        try:
+            message = FastAPIMessage(**raw_notification)
+        except ValidationError as e:
+            logging.warning(f"Unsupported type of notification. More info: {e}")
+            return
+        
+        if message.thread_id not in self.q_cache:
+            self.q_cache.add(message.thread_id)
+            await self.q.put(message)
+        else:
+            logging.info(f"Ignoring message from {message.username} as already in queue")
 
 
 

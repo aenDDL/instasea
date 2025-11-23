@@ -59,7 +59,7 @@ It is there that you give precise instructions as to how to redirect the convers
 When you have everything prepared, run the script (requires host="127.0.0.1", port=8000 available) by 
 typing the command:
 ```
-instasea chatbot
+instasea chat
 ```
 From now on, the bot will listen and respond to messages until you decide to disable the program (CTRL+C).
 

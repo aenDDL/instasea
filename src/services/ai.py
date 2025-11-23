@@ -5,7 +5,7 @@ from typing import List, Literal
 from pydantic import BaseModel, Field, model_validator, ConfigDict
 from grpc import RpcError
 
-from src.services.validator import Message
+from src.core.types import Message
 
 
 class AIResponse(BaseModel):

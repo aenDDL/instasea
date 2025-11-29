@@ -25,11 +25,11 @@ def load_commands() -> None:
 def register_with_typer() -> None:
     group_apps: dict[str, typer.Typer] = {}
 
-    for group, name, func in get_registry():
+    for group, func in get_registry():
         if group not in group_apps:
             group_apps[group] = typer.Typer()
             instasea.add_typer(group_apps[group], name=group)
-        group_apps[group].command(name)(func)
+        group_apps[group].command(group)(func)
 
 
 def main() -> None:

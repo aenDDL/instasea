@@ -16,7 +16,7 @@ def transform_conversation(conversation: list[DirectMessage]) -> list[Message]:
             transformed.append(adapter.validate_python(message.model_dump()))
         except ValidationError as e:
             logging.warning(f"Skipping unsupported message format: {e}")
-        logging.info(transformed)
+        logging.debug(transformed)
     
     if not transformed:
         raise RuntimeError("No valid messages in thread.")
